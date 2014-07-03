@@ -1,0 +1,58 @@
+
+-- SIMPLE JOIN
+
+SELECT * FROM teams  JOIN leagues on league.id = teams.account_id;
+
+
+-- SUB QUERY
+
+-- Which division has a Kicker on the their teams?
+
+SELECT * FROM divisions where id in 
+    (SELECT division_id from divisions_teams WHERE team_id in 
+       (SELECT id from teams where id in (
+          SELECT team_id from players where position = 'K') ) );
+
+
+-- which divisions has a player with last name 'Manning'?
+
+SELECT * FROM divisions where id in 
+    (SELECT division_id from divisions_teams WHERE team_id in 
+       (SELECT id from teams where id in (
+          SELECT team_id from players where last_name = 'Manning') ) );
+
+
+ -- Transaction
+
+start transaction;
+
+insert into players values (10, 'Richard', 'Sherman',  'WR', 3, now(), now());
+
+rollback;
+
+
+-- JOIN examples
+
+-- Game schedule
+ 
+ select home_team.name AS 'Home Team', away_team.name AS 'Away Team', time AS 'Played on' 
+ from teams AS home_team, teams AS away_team, games AS outer_games
+    WHERE home_team.id = (select home_team_id from games where id = outer_games.id) and
+          away_team.id = (select away_team_id from games where id = outer_games.id);
+
+ -- Players with atleast 200 yards in a game 
+
+ select first_name, last_name, yards, teams.name AS Opponent 
+ from players, game_stats, games, teams
+   where players.id = game_stats.player_id
+     AND game_stats.yards >= 200
+     AND games.id  = game_stats.game_id
+     AND teams.id  = games.`away_team_id`;
+
+  -- List Players with their total yards
+
+select first_name, last_name, sum(yards) AS total_yards
+from players, game_stats
+  where game_stats.player_id = players.id
+group by game_stats.player_id;
+
